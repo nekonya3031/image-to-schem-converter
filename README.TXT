@@ -1,4 +1,3 @@
-Для запуска юзаейтe
-java -jar build/libs/Bot.jar токен(без скобочек и всего такого и без кавычек, если что, можно в коде поставить константой)
-Для компила
-gradlew dist
+for run: java -jar file.jar
+usege: drop image.png to folder where jar file is
+warning: convertor ignore images more than 450/450 pixels(you can change it)
