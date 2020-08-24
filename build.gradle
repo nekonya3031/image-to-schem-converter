@@ -1,0 +1,31 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    
+    jcenter()
+    mavenLocal()
+    mavenCentral()
+    maven{ url 'https://www.jitpack.io' }
+}
+ext{
+    mindustryVersion = 'v104'
+}
+
+dependencies {
+  //  implementation 'net.dv8tion:JDA:3.5.0_329
+      compile "com.github.Anuken.Arc:arc-core:$mindustryVersion"
+    compile "com.github.Anuken.Mindustry:core:$mindustryVersion"
+    
+}
+tasks.withType(JavaCompile) {
+  options.encoding = 'CP1251'
+}
+
+task dist (type: Jar) {
+    manifest{ attributes 'Main-Class': "Bot" }
+    from{ configurations.compileClasspath.collect{ it.isDirectory() ? it : it.name.endsWith("pom") ? it : zipTree(it)}}
+    from files(sourceSets.main.output)
+    
+}
