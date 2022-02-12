@@ -10,7 +10,7 @@ repositories {
     maven{ url 'https://www.jitpack.io' }
 }
 ext{
-    mindustryVersion = 'v104'
+    mindustryVersion = 'v135'
 }
 
 dependencies {
