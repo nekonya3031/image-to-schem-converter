@@ -1,6 +1,3 @@
-import java.util.ArrayList;
-import java.util.*;
-import java.awt.image.*;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 import java.io.*;
@@ -8,16 +5,10 @@ import java.io.*;
 import mindustry.game.*;
 import mindustry.content.*;
 import mindustry.game.Schematic.*;
-import mindustry.content.Items.*;
 import arc.struct.*;
 import mindustry.*;
 import mindustry.world.*;
 import arc.files.*;
-import arc.math.*;
-import arc.util.*;
-import mindustry.world.blocks.distribution.Sorter;
-import mindustry.type.*;
-import mindustry.content.*;
 import mindustry.core.*;
 import mindustry.ctype.*;
 
@@ -26,7 +17,7 @@ public class Bot {
     public static Seq<Stile> tiles2 = new Seq<>();
     public static Block blocked = Blocks.sorter;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException{
         Version.enabled = false;
         Vars.schematics = new Schematics();
         Vars.content = new ContentLoader();
@@ -44,79 +35,63 @@ public class Bot {
         for (Stile gg : sorterSchema.tiles) {
             blocked = gg.block;
         }
-        try {
-            StringMap tags = new StringMap();
-            tags.put("name", "photo");
-            BufferedImage bi = ImageIO.read(new File("image.png"));
-            int w = bi.getWidth();
-            int h = bi.getHeight();
-            if (w > 550 || h > 550) {
-                System.out.println("Picture may be smaller than fucking large pixels");
-                return;
-            }
-            int[][] pictureR = new int[w][h];
-            int[][] pictureG = new int[w][h];
-            int[][] pictureB = new int[w][h];
-            int counter = 0;
-            int[][] sorterConfig = new int[w][h];
-            int x = 1;
-            int y = 1;
-            int y1 = h;
-            if (blocked == null) {
-                System.out.println("nullblock");
-                return;
-            }
-            while (x < w) {
-                //System.out.print("x" + x);
-                y = 0;
-                y1 = h;
-                while (y < h) {
 
-                    int rgb = bi.getRGB(x, y);
-                    pictureR[x][y] = (rgb >> 16) & 0xFF;
-                    pictureG[x][y] = (rgb >> 8) & 0xFF;
-                    pictureB[x][y] = (rgb) & 0xFF;
-                    int id = colorToSorter(pictureR[x][y], pictureG[x][y], pictureB[x][y]);
-                    byte a = 0;
-                    Stile tiler = new Stile(blocked, x, y1, Vars.content.item(id), a);
-//                    System.out.println(tiler.x+" "+tiler.y+" "+tiler.rotation+" "+tiler.config);
-                    tiles.add(tiler);
-                    y++;
-                    y1--;
-                }
-                x++;
-            }//����� for
+                    BufferedImage bi = ImageIO.read(new File("image.png"));
+                    int w = bi.getWidth();
+                    int h = bi.getHeight();
+                    int[][] pictureR = new int[w][h];
+                    int[][] pictureG = new int[w][h];
+                    int[][] pictureB = new int[w][h];
+                    int counter = 0;
+                    int[][] sorterConfig = new int[w][h];
+                    int x = 1;
+                    int y = 1;
+                    int y1 = h;
+                    if (blocked == null) {
+                        System.out.println("nullblock");
+                        return;
+                    }
+                    while (x < w) {
+                        y = 0;
+                        y1 = h;
+                        while (y < h) {
+                            int rgb = bi.getRGB(x, y);
+                            pictureR[x][y] = (rgb >> 16) & 0xFF;
+                            pictureG[x][y] = (rgb >> 8) & 0xFF;
+                            pictureB[x][y] = (rgb) & 0xFF;
+                            int id = colorToSorter(pictureR[x][y], pictureG[x][y], pictureB[x][y]);
+                            byte a = 0;
+                            Stile tiler = new Stile(blocked, x, y1, Vars.content.item(id), a);
+                            tiles.add(tiler);
+                            y++;
+                            y1--;
+                        }
+                        x++;
+                    }
+                    for (Stile f : tiles) {
+                        if (f.block == null) {
+                            System.out.println(f.x + " " + f.y + " " + f.config + " " + f.rotation);
+                            f.block = blocked;
+                            tiles2.add(f);
+                        }
+                    }
+                    for (Stile f : tiles2) {
+                        if (f.block == null) {
+                            System.out.println(f.x + "#" + f.y + " " + f.config + " " + f.rotation);
+                        }
+                    }
+                    System.out.println("gen");
+                    System.out.println(blocked.name);
 
-            for (Stile f : tiles) {
-                if (f.block == null) {
-                    System.out.println(f.x + " " + f.y + " " + f.config + " " + f.rotation);
-                    f.block = blocked;
-                    tiles2.add(f);
-                }
-            }
-            for (Stile f : tiles2) {
-                if (f.block == null) {
-                    System.out.println(f.x + "#" + f.y + " " + f.config + " " + f.rotation);
-                }
-            }
+                    int xSize = w%256==0 ? w : w+1;
+                    int ySize = h%256==0 ? h : h+1;
 
-            File schemFile = new File("photo.msch");
-
-            System.out.println("gen");
-            System.out.println(blocked.name);
-            Schematic schem = new Schematic(tiles, tags, w, h);
-            schem.save();
-            Schematics aaa = new Schematics();
-            String outlast = aaa.writeBase64(schem);
-            System.out.println(outlast);
-
-            Schematics.write(schem, new Fi(schemFile));
-
-        } catch (IOException e) {
-        }
-        ;
+                    for(x = 0; x < xSize; x+=256){
+                        for(y = 0; y < ySize; y+=256) {
+                            generateFileSchematic(tiles,x,y,(x+256)<=w?256:w-(w-(x)),(y+256)<=h?256:h-(h-(y)));
+                        }
+                    }
     }
-
     public static int colorToSorter(int r, int g, int b) {
         int itemR[] = new int[]{217, 147, 235, 178, 247, 39, 141, 249, 119, 83, 203, 224, 243, 116, 225, 225};
         int itemG[] = new int[]{157, 127, 238, 198, 203, 39, 161, 163, 119, 86, 217, 186, 233, 87, 121, 170};
@@ -162,7 +137,24 @@ public class Bot {
             }
             i++;
         }
-        //System.out.print(minDif);
         return minDif;
+    }
+
+    public static void generateFileSchematic(Seq<Stile> tilesAll, int startX, int startY, int offsetX, int offsetY) throws IOException{
+        Seq<Stile> tiles = new Seq<>();
+        tilesAll.forEach(t->{
+                    if(t.x<startX+offsetX&&t.x>=startX&&t.y<startY+offsetY&&t.y>=startY){
+                        Stile t1 = new Stile(t.block,t.x-offsetX,t.y-offsetY,t.config,t.rotation);
+                        tiles.add(t1);
+                    }
+                }
+        );
+        StringMap tags = new StringMap();
+        tags.put("name", "photo"+(startX/256)+"_"+(startY/256));
+        Schematic schem = new Schematic(tiles, tags, offsetX, offsetY);
+        schem.save();
+        Schematics aaa = new Schematics();
+        String outlast = aaa.writeBase64(schem);
+        Schematics.write(schem, new Fi(new File("result/photo"+(startX/256)+"_"+(startY/256)+".msch")));
     }
 }
